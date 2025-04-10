@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barkod Okuma</title>
+    <script src="https://unpkg.com/quagga/dist/quagga.min.js"></script>
+    <style>
+        #scanner-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin: auto;
+        }
+        #scanner-container video {
+            width: 100%;
+            height: auto;
+        }
+        #result {
+            text-align: center;
+            font-size: 18px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Barkod Okuma Uygulaması</h1>
+    <div id="scanner-container">
+        <video id="scanner-video"></video>
+    </div>
+    <div id="result">Barkod sonucu: <span id="barcode-result">Yok</span></div>
+
+    <script>
+        // QuaggaJS ile barkod okuma başlatma
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+            // Kamera erişimi sağlanıyor
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+                .then(function(stream) {
+                    // Kamera akışını video elementine bağla
+                    var video = document.getElementById('scanner-video');
+                    video.srcObject = stream;
+                    video.play();
+
+                    // QuaggaJS başlatma
+                    Quagga.init({
+                        inputStream: {
+                            type: "LiveStream",
+                            constraints: {
+                                facingMode: "environment",
+                            },
+                            target: video, // Video elementi hedef al
+                        },
+                        decoder: {
+                            readers: ["ean_reader", "code_128_reader", "ean_8_reader", "upc_reader", "code_39_reader"] // Okunacak barkod tipleri
+                        },
+                    }, function(err) {
+                        if (err) {
+                            console.error(err);
+                            return;
+                        }
+                        Quagga.start(); // Barkod tarayıcıyı başlat
+                    });
+
+                    // Barkod okunduğunda çalışacak fonksiyon
+                    Quagga.onDetected(function(result) {
+                        const barcode = result.codeResult.code; // Okunan barkod değeri
+                        document.getElementById('barcode-result').textContent = barcode;
+                        console.log("Barkod Okundu: ", barcode);
+
+                        // Burada barkodu kaydedebilirsiniz (örneğin localStorage veya sunucuya gönderilebilir)
+                    });
+                })
+                .catch(function(err) {
+                    alert("Kamera erişimi sağlanamadı: " + err.message);
+                });
+        } else {
+            alert("Kamera desteği yok.");
+        }
+    </script>
+
+</body>
+</html>
